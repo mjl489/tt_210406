@@ -1,0 +1,55 @@
+---
+title: "Tidy Tuesday 6th Apr 2021"
+author: "Matt Lee"
+date: "Prepared for Tidytuesday 6th April 2021"
+output: 
+
+prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, messages = FALSE, error = FALSE)
+library(tidyverse)
+library(dplyr)
+library(tidytuesdayR)
+library(ggimage)
+library(prettydoc)
+
+forest <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-04-06/forest.csv')
+forest$net_forest_conversion000 <- forest$net_forest_conversion/1000
+forest$flag <- sprintf('![]"./flags/gif/%s.gif"', forest$code)
+
+forestnew <- select(forest, entity, year, net_forest_conversion000)
+forestnew$code <- tolower(forest$code)
+forestnew$flag <- sprintf('flags/gif/%s.gif', forestnew$code)
+forestnew2 <- filter(forestnew, code != "imn")
+forestnew3 <- filter(forestnew2, code != "owid_wrl")
+```
+
+
+Source: Hannah Ritchie and Max Roser (2021) Forests and Deforestation. Published online at OurWorldInData.org. Retrieved from: https://ourworldindata.org/forests-and-deforestation
+
+
+
+# Change in forest cover per year
+
+```{r plotchange annual, echo=FALSE}
+ggplot(forestnew3, aes(x = year, y = net_forest_conversion000)) + geom_image(aes(image=flag), size=.04) + theme_bw() + xlab("Year") + ylab("Net forest conversion (000 Hectares)") + ggtitle(label = "Net forest conversion by year") + scale_x_continuous(breaks = c(1990,2000,2010,2015))
+```
+
+# Cumulative change in forest cover
+
+``` {r cumulativechange, echo = FALSE}
+data_wide <- spread(forestnew3, year, net_forest_conversion000)
+data_wide$c2000 <- (data_wide$"1990" + data_wide$"2000")
+data_wide$c2010 <- (data_wide$"1990" + data_wide$"2000" + data_wide$"2010")
+data_wide$c2015 <- (data_wide$"1990" + data_wide$"2000" + data_wide$"2010" + data_wide$"2015")
+reshaped2 <- gather(data_wide, yearofcount, cumulativechange, c2000, c2010, c2015)
+ggplot(reshaped2, aes(x = yearofcount, y = cumulativechange)) + geom_image(aes(image=flag), size=.04) + theme_bw() + xlab("Year of cumulative value (calculated from 1990)") + ylab("Net forest conversion (000 Hectares)") + ggtitle(label = "Cumulative forest conversion by year")
+
+
+```
+
+Twitter @wannabehawkeye
